@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>Transformer V/Turn — QA Lite</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="theme-color" content="#121521">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <style>
+    :root { --bg:#0b0d12; --panel:#121521; --panel-2:#171a27; --text:#e7e9f0; --muted:#9aa3b2; --ok:#1db954; --bad:#ff4757; --accent:#4f8cff; --border:#252a3a; }
+    * { box-sizing: border-box; } html, body { height: 100%; }
+    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial; background: linear-gradient(180deg, #0b0d12 0%, #0e1320 100%); color: var(--text); font-size: 16px; }
+    .wrap { max-width: 1100px; margin: 16px auto 72px; padding: 0 12px; }
+    h1 { font-size: 22px; margin: 0 0 6px; letter-spacing: 0.2px; }
+    .sub { color: var(--muted); margin-bottom: 12px; }
+    .card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 14px; box-shadow: 0 6px 20px rgba(0,0,0,0.2); }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; }
+    .row > * { flex: 1; min-width: 220px; }
+    label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+    input, select, textarea { width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--panel-2); color: var(--text); outline: none; font-size: 16px; }
+    textarea { min-height: 72px; resize: vertical; } input[readonly] { background: #101523; opacity: 0.9; }
+    .btn { appearance: none; border: 1px solid var(--border); background: var(--panel-2); color: var(--text); padding: 12px 16px; border-radius: 12px; cursor: pointer; font-weight: 700; font-size: 16px; touch-action: manipulation; }
+    .btn.primary { background: var(--accent); border-color: #2e6ff7; } .btn:hover { border-color: #35405b; }
+    .kpi { background: linear-gradient(180deg,#12182a 0%,#0f1423 100%); border: 1px solid var(--border); border-radius: 12px; padding: 12px; text-align: center; }
+    .kpi .label { font-size: 12px; color: var(--muted); } .kpi .value { font-size: 20px; font-weight: 800; margin-top: 2px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; } th, td { border-bottom: 1px solid var(--border); padding: 10px; text-align: left; font-size: 14px; } th { color: #cbd5e1; font-weight: 700; }
+    .light { display: inline-block; width: 16px; height: 16px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.2); vertical-align: middle; }
+    .light.pass { background: var(--ok); box-shadow: 0 0 8px rgba(29,185,84,0.7); } .light.fail { background: var(--bad); box-shadow: 0 0 8px rgba(255,71,87,0.7); }
+    .light.na { background: #3b4154; }
+    .banner { margin-top: 12px; text-align: center; font-weight: 900; padding: 14px; border-radius: 12px; letter-spacing: 0.6px; }
+    .banner.pass { background: rgba(29,185,84,0.1); border: 1px solid rgba(29,185,84,0.45); color: #86f3ae; } .banner.fail { background: rgba(255,71,87,0.1); border: 1px solid rgba(255,71,87,0.45); color: #ffb3ba; }
+    .toolbar { display: flex; gap: 8px; flex-wrap: wrap; } .toolbar .btn { flex: 1; min-width: 120px; }
+    @media (max-width: 640px) { table thead { display: none; } table, tbody, tr, td { display: block; width: 100%; }
+      tbody tr { border: 1px solid var(--border); border-radius: 12px; margin-bottom: 10px; overflow: hidden; }
+      tbody tr td { display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; }
+      tbody tr td::before { content: attr(data-label); color: var(--muted); font-size: 12px; margin-right: 12px; flex: 1; }
+      tbody tr td:last-child { justify-content: flex-end; } tbody tr td input, tbody tr td select { max-width: 50%; } }
+    @media print { body { background: #fff; color: #000; } .card { box-shadow: none; border: 1px solid #bbb; } .btn, .sub { display: none !important; } .wrap { margin: 0; max-width: none; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>Transformer V/Turn — QA Lite</h1>
+    <div class="sub">Mobile-friendly with bench header and overall PASS/FAIL.</div>
+    <div class="card" style="margin-bottom:12px">
+      <h2 style="margin:0 0 8px 0; font-size:18px">Bench Header</h2>
+      <div class="row">
+        <div><label>Date</label><input id="hdrDate" type="date" /></div>
+        <div><label>Tech Initials</label><input id="hdrTech" type="text" placeholder="e.g., B.S." /></div>
+        <div><label>Part / Model #</label><input id="hdrPart" type="text" placeholder="e.g., Axiom-PT-200" /></div>
+        <div><label>Serial / WO</label><input id="hdrWO" type="text" placeholder="optional" /></div>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <div style="flex:1 1 100%"><label>Notes</label><textarea id="hdrNotes" placeholder="Steel type, lamination stacking, special instructions…"></textarea></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2 style="margin-top:0">Primary</h2>
+      <div class="row">
+        <div><label>Applied Primary Voltage (VAC)</label><input id="primaryV" type="number" placeholder="e.g., 120" inputmode="decimal" /></div>
+        <div><label>Primary Turns</label><input id="primaryTurns" type="number" placeholder="e.g., 2000" inputmode="numeric" /></div>
+        <div><label>Primary AWG (record)</label><select id="primaryAwg"><option value="">—</option></select></div>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <div class="kpi" style="flex:1"><div class="label">Volts per Turn</div><div class="value" id="vptOut">—</div></div>
+        <div class="kpi" style="flex:1"><div class="label">Tolerance (±%)</div><div class="value"><input id="tolPct" type="number" step="any" value="0.1" style="text-align:center; width:140px" inputmode="decimal" /></div></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:12px">
+      <div class="row" style="align-items:center; margin-bottom:8px">
+        <h2 style="margin:0; flex:1">Secondaries</h2>
+        <div class="toolbar">
+          <button class="btn" id="btnAdd">+ Add Row</button>
+          <button class="btn" id="btnClear">Clear</button>
+          <button class="btn primary" id="btnPrint">Print</button>
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr><th style="width:5ch">#</th><th>Description</th><th>Turns</th><th>AWG</th><th>Expected V</th><th>Tested V</th><th>Δ %</th><th>Status</th><th></th></tr>
+        </thead>
+        <tbody id="secTbody"></tbody>
+      </table>
+      <div id="overallBanner" class="banner" style="display:none"></div>
+    </div>
+    <div class="footer">Expected V = (V/turn) × turns. Status uses the tolerance above (default ±0.1%).</div>
+  </div>
+  <script>
+    const $ = s => document.querySelector(s);
+    const el = (t,a={},c=[]) => { const n=document.createElement(t); Object.entries(a).forEach(([k,v])=>{ if(k==='class')n.className=v; else if(k==='text')n.textContent=v; else if(k==='onclick')n.onclick=v; else n.setAttribute(k,v)}); c.forEach(x=>n.appendChild(typeof x==='string'?document.createTextNode(x):x)); return n; };
+    const GAUGES=[10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44];
+    (function(){ const p=$('#primaryAwg'); GAUGES.forEach(g=>p.appendChild(el('option',{value:g,text:'AWG '+g}))); })();
+    (function(){ const d=new Date(); $('#hdrDate').value=d.toISOString().slice(0,10); })();
+    function vpt(){ const Vp=parseFloat($('#primaryV').value),Np=parseFloat($('#primaryTurns').value); return Number.isFinite(Vp)&&Number.isFinite(Np)&&Np!==0?Vp/Np:NaN; }
+    function updateVpt(){ const val=vpt(); $('#vptOut').textContent=Number.isFinite(val)?val.toFixed(6):'—'; calcAllRows(); }
+    $('#primaryV').addEventListener('input',updateVpt); $('#primaryTurns').addEventListener('input',updateVpt); $('#tolPct').addEventListener('input',calcAllRows);
+    let rowId=0;
+    const awgSelect=(cur="")=>{ const s=el('select'); s.appendChild(el('option',{value:'',text:'—'})); GAUGES.forEach(g=>s.appendChild(el('option',{value:g,text:'AWG '+g}))); if(cur) s.value=cur; s.addEventListener('change',calcAllRows); return s; };
+    function addRow(desc="",turns="",awg=""){ const id=++rowId,tr=el('tr',{id:'r-'+id}); tr.appendChild(el('td',{text:id}));
+      const tdD=el('td',{'data-label':'Description'}), tdT=el('td',{'data-label':'Turns'}), tdA=el('td',{'data-label':'AWG'}), tdE=el('td',{id:'exp-'+id,'data-label':'Expected V'}), tdV=el('td',{'data-label':'Tested V'}), tdDl=el('td',{id:'dlt-'+id,'data-label':'Δ %'}), tdSt=el('td',{id:'st-'+id,'data-label':'Status'}), tdRm=el('td',{'data-label':''});
+      const iD=el('input',{type:'text',placeholder:'e.g., 6.3V heater',value:desc}), iT=el('input',{type:'number',placeholder:'turns',value:turns,inputmode:'numeric'}), iV=el('input',{type:'number',placeholder:'measured',inputmode:'decimal'});
+      [iD,iT,iV].forEach(inp=>inp.addEventListener('input',calcAllRows)); tdD.appendChild(iD); tdT.appendChild(iT); tdA.appendChild(awgSelect(awg)); tdV.appendChild(iV);
+      tdRm.appendChild(el('button',{class:'btn',onclick:()=>{tr.remove(); calcAllRows();}},['Remove'])); [tdD,tdT,tdA,tdE,tdV,tdDl,tdSt,tdRm].forEach(td=>tr.appendChild(td)); $('#secTbody').appendChild(tr); }
+    function calcAllRows(){ const vptVal=vpt(), tol=parseFloat($('#tolPct').value); let allPass=true, anyRow=false;
+      document.querySelectorAll('#secTbody tr').forEach(tr=>{ const id=tr.id.split('-')[1]; const turns=parseFloat(tr.children[2]?.querySelector('input')?.value); const tested=parseFloat(tr.children[5]?.querySelector('input')?.value);
+        const expC=$('#exp-'+id), dltC=$('#dlt-'+id), stC=$('#st-'+id);
+        const expV=Number.isFinite(vptVal)&&Number.isFinite(turns)?vptVal*turns:NaN; expC.textContent=Number.isFinite(expV)?expV.toFixed(4):'—';
+        let dlt=NaN; if(Number.isFinite(expV)&&Number.isFinite(tested)){ dlt=Math.abs(tested-expV)/Math.abs(expV)*100; anyRow=true; } dltC.textContent=Number.isFinite(dlt)?dlt.toFixed(3):'—';
+        stC.innerHTML=''; if(Number.isFinite(dlt)&&Number.isFinite(tol)){ const pass=dlt<=tol; stC.appendChild(el('span',{class:'light '+(pass?'pass':'fail')})); if(!pass) allPass=false; } else { stC.appendChild(el('span',{class:'light na'})); }
+      });
+      const b=$('#overallBanner'); if(anyRow){ b.style.display='block'; b.className='banner '+(allPass?'pass':'fail'); b.textContent=allPass?'OVERALL PASS':'OVERALL FAIL'; } else { b.style.display='none'; }
+    }
+    $('#btnAdd').addEventListener('click',()=>addRow()); $('#btnClear').addEventListener('click',()=>{ $('#secTbody').innerHTML=''; rowId=0; calcAllRows(); }); $('#btnPrint').addEventListener('click',()=>window.print());
+    addRow('HT secondary','200',''); addRow('Heater tap','20',''); updateVpt();
+    if('serviceWorker' in navigator){ window.addEventListener('load', ()=>{ navigator.serviceWorker.register('./service-worker.js').catch(()=>{}); }); }
+  </script>
+</body>
+</html>
