@@ -126,7 +126,60 @@
 
     <div class="footer">Expected V = (V/turn) × turns. Status uses the tolerance above (default ±0.1%).</div>
   </div>
+    <div class="card" style="margin-top:12px">
+      <h2 style="margin:0 0 8px 0;">Test History</h2>
 
+      <!-- Filter row -->
+      <div class="row" style="margin-bottom:8px">
+        <div>
+          <label>From Date</label>
+          <input id="histFrom" type="date" />
+        </div>
+        <div>
+          <label>To Date</label>
+          <input id="histTo" type="date" />
+        </div>
+        <div>
+          <label>Tech Initials</label>
+          <input id="histTech" type="text" placeholder="e.g., B.S." />
+        </div>
+        <div>
+          <label>Part / Model #</label>
+          <input id="histPart" type="text" placeholder="e.g., Axiom-PT-200" />
+        </div>
+      </div>
+
+      <div class="row" style="margin-bottom:8px">
+        <div style="max-width:220px;">
+          <label>Overall Status</label>
+          <select id="histStatus">
+            <option value="">Any</option>
+            <option value="PASS">PASS</option>
+            <option value="FAIL">FAIL</option>
+          </select>
+        </div>
+        <div style="align-self:flex-end;">
+          <button class="btn primary" id="btnHistRefresh">Refresh</button>
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Tech</th>
+            <th>Part / Model</th>
+            <th>Primary V</th>
+            <th>V/Turn</th>
+            <th>Status</th>
+            <th>Details</th>
+          </tr>
+        </thead>
+        <tbody id="historyTbody"></tbody>
+      </table>
+
+      <div id="historyDetails" style="margin-top:10px; font-size:14px; color:var(--muted);"></div>
+    </div>
   <!-- Core QA Lite logic -->
   <script>
     const $ = s => document.querySelector(s);
@@ -367,6 +420,176 @@
     }
 
     document.getElementById('btnSave').addEventListener('click', saveQaTestToSupabase);
+      <script>
+    const SUPABASE_URL = "https://fymfhurfgdzmiffgnfed.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ5bWZodXJmZ2R6bWlmZmduZmVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ2ODg0ODIsImV4cCI6MjA4MDI2NDQ4Mn0.Lrhp4uHaiEgBW4bOBahK5LEiK-JCOcCzNGKKGsdGJC4";
+
+    const { createClient } = supabase;
+    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    async function saveQaTestToSupabase() {
+      // ... your existing save code ...
+    }
+
+    document.getElementById('btnSave').addEventListener('click', saveQaTestToSupabase);
+
+    // -----------------------
+    // Test History Functions
+    // -----------------------
+
+    async function loadHistory() {
+      try {
+        let query = supabaseClient
+          .from('qa_tests')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .limit(100); // cap for now
+
+        // Filters
+        const from = document.getElementById('histFrom').value;
+        const to = document.getElementById('histTo').value;
+        const tech = document.getElementById('histTech').value.trim();
+        const part = document.getElementById('histPart').value.trim();
+        const status = document.getElementById('histStatus').value;
+
+        if (from) {
+          query = query.gte('created_at', from + 'T00:00:00Z');
+        }
+        if (to) {
+          query = query.lte('created_at', to + 'T23:59:59Z');
+        }
+        if (tech) {
+          query = query.ilike('operator', '%' + tech + '%');
+        }
+        if (part) {
+          query = query.ilike('product_id', '%' + part + '%');
+        }
+        if (status) {
+          query = query.eq('pass_fail', status);
+        }
+
+        const { data, error } = await query;
+        if (error) throw error;
+
+        renderHistoryTable(data || []);
+      } catch (err) {
+        console.error('History load error:', err);
+        alert('Error loading history. Check console.');
+      }
+    }
+
+    function renderHistoryTable(rows) {
+      const tbody = document.getElementById('historyTbody');
+      const detailsDiv = document.getElementById('historyDetails');
+      tbody.innerHTML = '';
+      detailsDiv.innerHTML = '';
+
+      if (!rows.length) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--muted);">No tests found for this filter.</td></tr>';
+        return;
+      }
+
+      rows.forEach(test => {
+        const tr = document.createElement('tr');
+
+        const created = test.created_at ? new Date(test.created_at) : null;
+        const dateStr = created
+          ? created.toLocaleDateString()
+          : '';
+
+        const vpt = (test.vs_per_turn != null && !Number.isNaN(test.vs_per_turn))
+          ? Number(test.vs_per_turn).toFixed(6)
+          : '';
+
+        tr.innerHTML = `
+          <td>${dateStr}</td>
+          <td>${test.operator || ''}</td>
+          <td>${test.product_id || ''}</td>
+          <td>${test.primary_voltage != null ? test.primary_voltage : ''}</td>
+          <td>${vpt}</td>
+          <td>${test.pass_fail || ''}</td>
+          <td><button class="btn" data-testid="${test.id}">View</button></td>
+        `;
+
+        tbody.appendChild(tr);
+      });
+
+      // Attach click handlers for details
+      tbody.querySelectorAll('button[data-testid]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = parseInt(btn.getAttribute('data-testid'), 10);
+          if (Number.isFinite(id)) {
+            loadHistoryDetails(id);
+          }
+        });
+      });
+    }
+
+    async function loadHistoryDetails(testId) {
+      try {
+        const detailsDiv = document.getElementById('historyDetails');
+        detailsDiv.innerHTML = 'Loading details…';
+
+        const { data, error } = await supabaseClient
+          .from('qa_secondary_readings')
+          .select('*')
+          .eq('test_id', testId)
+          .order('id', { ascending: true });
+
+        if (error) throw error;
+
+        if (!data || !data.length) {
+          detailsDiv.innerHTML = '<em>No secondary readings found for this test.</em>';
+          return;
+        }
+
+        let html = `
+          <div style="margin-top:8px;">
+            <strong>Secondaries for Test #${testId}:</strong>
+            <table style="width:100%; border-collapse:collapse; margin-top:6px; font-size:13px;">
+              <thead>
+                <tr>
+                  <th style="border-bottom:1px solid var(--border); padding:4px;">Description</th>
+                  <th style="border-bottom:1px solid var(--border); padding:4px;">Expected V</th>
+                  <th style="border-bottom:1px solid var(--border); padding:4px;">Measured V</th>
+                  <th style="border-bottom:1px solid var(--border); padding:4px;">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+        `;
+
+        data.forEach(sec => {
+          html += `
+            <tr>
+              <td style="border-bottom:1px solid var(--border); padding:4px;">${sec.tap_name || ''}</td>
+              <td style="border-bottom:1px solid var(--border); padding:4px;">${sec.expected_voltage != null ? sec.expected_voltage : ''}</td>
+              <td style="border-bottom:1px solid var(--border); padding:4px;">${sec.measured_voltage != null ? sec.measured_voltage : ''}</td>
+              <td style="border-bottom:1px solid var(--border); padding:4px;">${sec.pass_fail || ''}</td>
+            </tr>
+          `;
+        });
+
+        html += `
+              </tbody>
+            </table>
+          </div>
+        `;
+
+        detailsDiv.innerHTML = html;
+      } catch (err) {
+        console.error('Details load error:', err);
+        alert('Error loading test details. Check console.');
+      }
+    }
+
+    // Wire up history refresh button + initial load
+    document.getElementById('btnHistRefresh').addEventListener('click', loadHistory);
+
+    // Load recent tests on first page load
+    document.addEventListener('DOMContentLoaded', () => {
+      loadHistory();
+    });
+  </script>
   </script>
 </body>
 </html>
