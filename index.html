@@ -115,12 +115,13 @@
     $('#btnAdd').addEventListener('click',()=>addRow()); $('#btnClear').addEventListener('click',()=>{ $('#secTbody').innerHTML=''; rowId=0; calcAllRows(); }); $('#btnPrint').addEventListener('click',()=>window.print());
     addRow('HT secondary','200',''); addRow('Heater tap','20',''); updateVpt();
     if('serviceWorker' in navigator){ window.addEventListener('load', ()=>{ navigator.serviceWorker.register('./service-worker.js').catch(()=>{}); }); }
- <!-- Supabase Client -->
+    </script>
+      <!-- Supabase Client -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
   const SUPABASE_URL = "https://fymfhurfgdzmiffgnfed.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ5bWZodXJmZ2R6bWlmZmduZmVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ2ODg0ODIsImV4cCI6MjA4MDI2NDQ4Mn0.Lrhp4uHaiEgBW4bOBahK5LEiK-JCOcCzNGKKGsdGJC4";
-  const supabase = supabasejs.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
   // Save QA test (parent) + secondary rows
   async function saveQaTestToSupabase() {
@@ -141,7 +142,7 @@
         : null; // PASS or FAIL
 
       // Insert primary QA test row
-      const { data: inserted, error: testErr } = await supabase
+      const { data: inserted, error: testErr } = await supabaseClient
         .from('qa_tests')
         .insert({
           operator,
@@ -191,7 +192,7 @@
 
       // Insert secondary readings
       if (secondaryRows.length > 0) {
-        const { error: secErr } = await supabase
+        const { error: secErr } = await supabaseClient
           .from('qa_secondary_readings')
           .insert(secondaryRows);
 
