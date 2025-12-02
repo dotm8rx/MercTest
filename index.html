@@ -73,7 +73,8 @@
         <div class="toolbar">
           <button class="btn" id="btnAdd">+ Add Row</button>
           <button class="btn" id="btnClear">Clear</button>
-          <button class="btn primary" id="btnPrint">Print</button>
+          <button class="btn primary" id="btnSave">Save Test</button>
+          <button class="btn" id="btnPrint">Print</button>
         </div>
       </div>
       <table>
@@ -114,6 +115,109 @@
     $('#btnAdd').addEventListener('click',()=>addRow()); $('#btnClear').addEventListener('click',()=>{ $('#secTbody').innerHTML=''; rowId=0; calcAllRows(); }); $('#btnPrint').addEventListener('click',()=>window.print());
     addRow('HT secondary','200',''); addRow('Heater tap','20',''); updateVpt();
     if('serviceWorker' in navigator){ window.addEventListener('load', ()=>{ navigator.serviceWorker.register('./service-worker.js').catch(()=>{}); }); }
+ <!-- Supabase Client -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const SUPABASE_URL = "https://YOURPROJECTID.supabase.co";
+  const SUPABASE_ANON_KEY = "YOUR-ANON-KEY-HERE";
+  const supabase = supabasejs.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  // Save QA test (parent) + secondary rows
+  async function saveQaTestToSupabase() {
+    try {
+      // Collect primary + header data
+      const operator = $('#hdrTech').value || null;
+      const product_id = $('#hdrPart').value || null;
+      const primary_voltage = parseFloat($('#primaryV').value) || null;
+      const primary_turns = parseInt($('#primaryTurns').value) || null;
+      const wire_gauge = $('#primaryAwg').value || null;
+      const vs_per_turn = parseFloat($('#vptOut').textContent) || null;
+      const notes = $('#hdrNotes').value || null;
+
+      // Collect overall PASS/FAIL banner
+      const banner = $('#overallBanner');
+      const pass_fail = banner.style.display !== 'none' 
+        ? banner.textContent.replace('OVERALL ', '') 
+        : null; // PASS or FAIL
+
+      // Insert primary QA test row
+      const { data: inserted, error: testErr } = await supabase
+        .from('qa_tests')
+        .insert({
+          operator,
+          product_id,
+          primary_voltage,
+          primary_turns,
+          wire_gauge,
+          vs_per_turn,
+          pass_fail,
+          notes
+        })
+        .select()
+        .limit(1);
+
+      if (testErr) throw testErr;
+
+      const test_id = inserted[0].id;
+
+      // Build secondary rows
+      const secondaryRows = [];
+      document.querySelectorAll('#secTbody tr').forEach(tr => {
+        const id = tr.id.split('-')[1];
+
+        const desc = tr.children[1].querySelector('input').value || null;
+        const turns = parseFloat(tr.children[2].querySelector('input').value) || null;
+        const awg = tr.children[3].querySelector('select').value || null;
+
+        const expected_voltage = parseFloat(tr.children[4].textContent) || null;
+        const measured_voltage = parseFloat(tr.children[5].querySelector('input').value) || null;
+
+        const statusEl = tr.children[6].querySelector('.light');
+        let pass_fail = null;
+        if (statusEl) {
+          if (statusEl.classList.contains('pass')) pass_fail = "PASS";
+          else if (statusEl.classList.contains('fail')) pass_fail = "FAIL";
+        }
+
+        secondaryRows.push({
+          test_id,
+          tap_name: desc,
+          expected_voltage,
+          measured_voltage,
+          pass_fail,
+          notes: null
+        });
+      });
+
+      // Insert secondary readings
+      if (secondaryRows.length > 0) {
+        const { error: secErr } = await supabase
+          .from('qa_secondary_readings')
+          .insert(secondaryRows);
+
+        if (secErr) throw secErr;
+      }
+
+      alert(`Saved Test #${test_id} successfully.`);
+      return test_id;
+
+    } catch (err) {
+      console.error("Save error:", err);
+      alert("Error saving test. Check console.");
+    }
+  }
+
+  // Wire Save button
+  $('#btnSave').addEventListener('click', saveQaTestToSupabase);
+</script>
   </script>
+  <!-- Supabase Client -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  const SUPABASE_URL = "https://fymfhurfgdzmiffgnfed.supabase.co";
+  const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ5bWZodXJmZ2R6bWlmZmduZmVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ2ODg0ODIsImV4cCI6MjA4MDI2NDQ4Mn0.Lrhp4uHaiEgBW4bOBahK5LEiK-JCOcCzNGKKGsdGJC4";
+
+  const supabase = supabasejs.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+</script>
 </body>
 </html>
