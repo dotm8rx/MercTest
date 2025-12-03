@@ -19,18 +19,27 @@
     .row > * { flex: 1; min-width: 220px; }
     label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
     input, select, textarea { width: 100%; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--panel-2); color: var(--text); outline: none; font-size: 16px; }
-    textarea { min-height: 72px; resize: vertical; } input[readonly] { background: #101523; opacity: 0.9; }
+    textarea { min-height: 72px; resize: vertical; } 
+    input[readonly] { background: #101523; opacity: 0.9; }
     .btn { appearance: none; border: 1px solid var(--border); background: var(--panel-2); color: var(--text); padding: 12px 16px; border-radius: 12px; cursor: pointer; font-weight: 700; font-size: 16px; touch-action: manipulation; }
-    .btn.primary { background: var(--accent); border-color: #2e6ff7; } .btn:hover { border-color: #35405b; }
+    .btn.primary { background: var(--accent); border-color: #2e6ff7; } 
+    .btn:hover { border-color: #35405b; }
     .kpi { background: linear-gradient(180deg,#12182a 0%,#0f1423 100%); border: 1px solid var(--border); border-radius: 12px; padding: 12px; text-align: center; }
-    .kpi .label { font-size: 12px; color: var(--muted); } .kpi .value { font-size: 20px; font-weight: 800; margin-top: 2px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 8px; } th, td { border-bottom: 1px solid var(--border); padding: 10px; text-align: left; font-size: 14px; } th { color: #cbd5e1; font-weight: 700; }
+    .kpi .label { font-size: 12px; color: var(--muted); } 
+    .kpi .value { font-size: 20px; font-weight: 800; margin-top: 2px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; } 
+    th, td { border-bottom: 1px solid var(--border); padding: 10px; text-align: left; font-size: 14px; } 
+    th { color: #cbd5e1; font-weight: 700; }
     .light { display: inline-block; width: 16px; height: 16px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.2); vertical-align: middle; }
-    .light.pass { background: var(--ok); box-shadow: 0 0 8px rgba(29,185,84,0.7); } .light.fail { background: var(--bad); box-shadow: 0 0 8px rgba(255,71,87,0.7); }
+    .light.pass { background: var(--ok); box-shadow: 0 0 8px rgba(29,185,84,0.7); } 
+    .light.fail { background: var(--bad); box-shadow: 0 0 8px rgba(255,71,87,0.7); }
     .light.na { background: #3b4154; }
     .banner { margin-top: 12px; text-align: center; font-weight: 900; padding: 14px; border-radius: 12px; letter-spacing: 0.6px; }
-    .banner.pass { background: rgba(29,185,84,0.1); border: 1px solid rgba(29,185,84,0.45); color: #86f3ae; } .banner.fail { background: rgba(255,71,87,0.1); border: 1px solid rgba(255,71,87,0.45); color: #ffb3ba; }
-    .toolbar { display: flex; gap: 8px; flex-wrap: wrap; } .toolbar .btn { flex: 1; min-width: 120px; }
+    .banner.pass { background: rgba(29,185,84,0.1); border: 1px solid rgba(29,185,84,0.45); color: #86f3ae; } 
+    .banner.fail { background: rgba(255,71,87,0.1); border: 1px solid rgba(255,71,87,0.45); color: #ffb3ba; }
+    .toolbar { display: flex; gap: 8px; flex-wrap: wrap; } 
+    .toolbar .btn { flex: 1; min-width: 120px; }
+    .footer { margin-top: 10px; font-size: 12px; color: var(--muted); }
     @media (max-width: 640px) { 
       table thead { display: none; } 
       table, tbody, tr, td { display: block; width: 100%; }
@@ -51,7 +60,9 @@
 <body>
   <div class="wrap">
     <h1>Transformer V/Turn — QA Lite</h1>
-    <div class="sub">Mobile-friendly with bench header and overall PASS/FAIL.</div>
+    <div class="sub">Mobile-friendly with bench header, history, and overall PASS/FAIL.</div>
+
+    <!-- Bench Header -->
     <div class="card" style="margin-bottom:12px">
       <h2 style="margin:0 0 8px 0; font-size:18px">Bench Header</h2>
       <div class="row">
@@ -65,6 +76,7 @@
       </div>
     </div>
 
+    <!-- Primary -->
     <div class="card">
       <h2 style="margin-top:0">Primary</h2>
       <div class="row">
@@ -95,6 +107,7 @@
       </div>
     </div>
 
+    <!-- Secondaries -->
     <div class="card" style="margin-top:12px">
       <div class="row" style="align-items:center; margin-bottom:8px">
         <h2 style="margin:0; flex:1">Secondaries</h2>
@@ -124,12 +137,10 @@
       <div id="overallBanner" class="banner" style="display:none"></div>
     </div>
 
-    <div class="footer">Expected V = (V/turn) × turns. Status uses the tolerance above (default ±0.1%).</div>
-  </div>
+    <!-- Test History -->
     <div class="card" style="margin-top:12px">
       <h2 style="margin:0 0 8px 0;">Test History</h2>
 
-      <!-- Filter row -->
       <div class="row" style="margin-bottom:8px">
         <div>
           <label>From Date</label>
@@ -180,6 +191,13 @@
 
       <div id="historyDetails" style="margin-top:10px; font-size:14px; color:var(--muted);"></div>
     </div>
+
+    <div class="footer">
+      Expected V = (V/turn) × turns. Status uses the tolerance above (default ±0.1%). 
+      <span style="opacity:0.6;">QA Lite v0.3</span>
+    </div>
+  </div>
+
   <!-- Core QA Lite logic -->
   <script>
     const $ = s => document.querySelector(s);
@@ -203,7 +221,7 @@
       GAUGES.forEach(g=>p.appendChild(el('option',{value:g,text:'AWG '+g})));
     })();
 
-    // Default date
+    // Default header date
     (function(){
       const d=new Date();
       $('#hdrDate').value=d.toISOString().slice(0,10);
@@ -326,7 +344,7 @@
     addRow('Heater tap','20','');
     updateVpt();
 
-    // PWA service worker
+    // PWA service worker (uses your existing service-worker.js)
     if('serviceWorker' in navigator){
       window.addEventListener('load', ()=>{
         navigator.serviceWorker.register('./service-worker.js').catch(()=>{});
@@ -334,19 +352,18 @@
     }
   </script>
 
-  <!-- Supabase Client + Save Logic -->
+  <!-- Supabase Client + Save & History Logic -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script>
     const SUPABASE_URL = "https://fymfhurfgdzmiffgnfed.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ5bWZodXJmZ2R6bWlmZmduZmVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ2ODg0ODIsImV4cCI6MjA4MDI2NDQ4Mn0.Lrhp4uHaiEgBW4bOBahK5LEiK-JCOcCzNGKKGsdGJC4";
 
-    // Supabase v2 CDN global
     const { createClient } = supabase;
     const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+    // Save QA test
     async function saveQaTestToSupabase() {
       try {
-        // Header + primary data
         const operator = $('#hdrTech').value || null;
         const product_id = $('#hdrPart').value || null;
         const primary_voltage = parseFloat($('#primaryV').value) || null;
@@ -355,13 +372,11 @@
         const vs_per_turn = parseFloat($('#vptOut').textContent) || null;
         const notes = $('#hdrNotes').value || null;
 
-        // Overall PASS/FAIL banner
         const banner = $('#overallBanner');
         const pass_fail = banner.style.display !== 'none'
           ? banner.textContent.replace('OVERALL ', '')
           : null;
 
-        // Insert parent record
         const { data: inserted, error: testErr } = await supabaseClient
           .from('qa_tests')
           .insert({
@@ -380,7 +395,6 @@
         if (testErr) throw testErr;
         const test_id = inserted[0].id;
 
-        // Build secondary rows
         const secondaryRows = [];
         document.querySelectorAll('#secTbody tr').forEach(tr => {
           const desc = tr.children[1].querySelector('input').value || null;
@@ -420,58 +434,65 @@
     }
 
     document.getElementById('btnSave').addEventListener('click', saveQaTestToSupabase);
-      <script>
-    const SUPABASE_URL = "https://fymfhurfgdzmiffgnfed.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ5bWZodXJmZ2R6bWlmZmduZmVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ2ODg0ODIsImV4cCI6MjA4MDI2NDQ4Mn0.Lrhp4uHaiEgBW4bOBahK5LEiK-JCOcCzNGKKGsdGJC4";
 
-    const { createClient } = supabase;
-    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    // -------- History helpers (client-side filtering) --------
+    function filterHistoryRows(rows) {
+      const from = document.getElementById('histFrom').value;
+      const to = document.getElementById('histTo').value;
+      const tech = document.getElementById('histTech').value.trim().toLowerCase();
+      const part = document.getElementById('histPart').value.trim().toLowerCase();
+      const status = document.getElementById('histStatus').value;
 
-    async function saveQaTestToSupabase() {
-      // ... your existing save code ...
+      return rows.filter(test => {
+        let ok = true;
+
+        let createdDate = null;
+        if (test.created_at) {
+          const d = new Date(test.created_at);
+          if (!isNaN(d)) createdDate = d;
+        }
+
+        if (from && createdDate) {
+          const fromDate = new Date(from + 'T00:00:00');
+          if (createdDate < fromDate) ok = false;
+        }
+        if (ok && to && createdDate) {
+          const toDate = new Date(to + 'T23:59:59');
+          if (createdDate > toDate) ok = false;
+        }
+
+        if (ok && tech) {
+          const val = (test.operator || '').toLowerCase();
+          if (!val.includes(tech)) ok = false;
+        }
+
+        if (ok && part) {
+          const val = (test.product_id || '').toLowerCase();
+          if (!val.includes(part)) ok = false;
+        }
+
+        if (ok && status) {
+          if ((test.pass_fail || '') !== status) ok = false;
+        }
+
+        return ok;
+      });
     }
-
-    document.getElementById('btnSave').addEventListener('click', saveQaTestToSupabase);
-
-    // -----------------------
-    // Test History Functions
-    // -----------------------
 
     async function loadHistory() {
       try {
-        let query = supabaseClient
+        const { data, error } = await supabaseClient
           .from('qa_tests')
           .select('*')
-          .order('created_at', { ascending: false })
-          .limit(100); // cap for now
+          .order('id', { ascending: false })
+          .limit(200);
 
-        // Filters
-        const from = document.getElementById('histFrom').value;
-        const to = document.getElementById('histTo').value;
-        const tech = document.getElementById('histTech').value.trim();
-        const part = document.getElementById('histPart').value.trim();
-        const status = document.getElementById('histStatus').value;
-
-        if (from) {
-          query = query.gte('created_at', from + 'T00:00:00Z');
-        }
-        if (to) {
-          query = query.lte('created_at', to + 'T23:59:59Z');
-        }
-        if (tech) {
-          query = query.ilike('operator', '%' + tech + '%');
-        }
-        if (part) {
-          query = query.ilike('product_id', '%' + part + '%');
-        }
-        if (status) {
-          query = query.eq('pass_fail', status);
-        }
-
-        const { data, error } = await query;
         if (error) throw error;
 
-        renderHistoryTable(data || []);
+        console.log('History rows from DB:', data);
+        const allRows = data || [];
+        const filtered = filterHistoryRows(allRows);
+        renderHistoryTable(filtered);
       } catch (err) {
         console.error('History load error:', err);
         alert('Error loading history. Check console.');
@@ -492,10 +513,11 @@
       rows.forEach(test => {
         const tr = document.createElement('tr');
 
-        const created = test.created_at ? new Date(test.created_at) : null;
-        const dateStr = created
-          ? created.toLocaleDateString()
-          : '';
+        let dateStr = '';
+        if (test.created_at) {
+          const d = new Date(test.created_at);
+          if (!isNaN(d)) dateStr = d.toLocaleDateString();
+        }
 
         const vpt = (test.vs_per_turn != null && !Number.isNaN(test.vs_per_turn))
           ? Number(test.vs_per_turn).toFixed(6)
@@ -514,7 +536,6 @@
         tbody.appendChild(tr);
       });
 
-      // Attach click handlers for details
       tbody.querySelectorAll('button[data-testid]').forEach(btn => {
         btn.addEventListener('click', () => {
           const id = parseInt(btn.getAttribute('data-testid'), 10);
@@ -582,14 +603,19 @@
       }
     }
 
-    // Wire up history refresh button + initial load
     document.getElementById('btnHistRefresh').addEventListener('click', loadHistory);
 
-    // Load recent tests on first page load
+    // On first load: set history From/To to today and load today's tests
     document.addEventListener('DOMContentLoaded', () => {
+      const today = new Date().toISOString().slice(0, 10);
+      const fromInput = document.getElementById('histFrom');
+      const toInput = document.getElementById('histTo');
+      if (fromInput && toInput) {
+        fromInput.value = today;
+        toInput.value = today;
+      }
       loadHistory();
     });
-  </script>
   </script>
 </body>
 </html>
