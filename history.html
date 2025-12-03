@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>QA Lite — Test History</title>
+  <meta name="theme-color" content="#121521">
+  <style>
+    :root { --bg:#0b0d12; --panel:#121521; --panel-2:#171a27; --text:#e7e9f0; --muted:#9aa3b2; --accent:#4f8cff; --border:#252a3a; }
+    * { box-sizing: border-box; } html, body { height: 100%; }
+    body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Arial; background: linear-gradient(180deg, #0b0d12 0%, #0e1320 100%); color: var(--text); font-size: 16px; }
+    .wrap { max-width: 1100px; margin: 16px auto 40px; padding: 0 12px; }
+    h1 { font-size: 22px; margin: 0 0 6px; letter-spacing: 0.2px; }
+    .sub { color: var(--muted); margin-bottom: 12px; }
+    .card { background: var(--panel); border: 1px solid var(--border); border-radius: 14px; padding: 14px; box-shadow: 0 6px 20px rgba(0,0,0,0.2); }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+    .row > * { flex: 1; min-width: 220px; }
+    label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+    input, select { width: 100%; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--border); background: var(--panel-2); color: var(--text); outline: none; font-size: 14px; }
+    .btn { appearance: none; border: 1px solid var(--border); background: var(--panel-2); color: var(--text); padding: 9px 14px; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 14px; }
+    .btn.primary { background: var(--accent); border-color: #2e6ff7; }
+    .btn:hover { border-color: #35405b; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; }
+    th, td { border-bottom: 1px solid var(--border); padding: 8px; text-align: left; font-size: 14px; }
+    th { color: #cbd5e1; font-weight: 700; }
+    .status-pill { display:inline-block; padding:2px 8px; border-radius:999px; font-size:11px; font-weight:700; }
+    .status-pass { background:rgba(46,213,115,0.12); color:#7bed9f; border:1px solid rgba(46,213,115,0.4); }
+    .status-fail { background:rgba(255,71,87,0.12); color:#ff6b81; border:1px solid rgba(255,71,87,0.4); }
+    #statusMsg { font-size: 13px; color: var(--muted); margin-top: 4px; }
+    #detailsPanel { margin-top: 10px; font-size: 14px; color: var(--muted); }
+    #detailsPanel table { font-size: 13px; }
+    a.back-link { font-size:13px; color:var(--muted); text-decoration:none; }
+    a.back-link:hover { text-decoration:underline; color:#e7e9f0; }
+    @media (max-width: 700px) {
+      table { font-size: 13px; }
+      th, td { padding: 6px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:8px;">
+      <div>
+        <h1>QA Lite — Test History</h1>
+        <div class="sub">Browse saved transformer QA tests from Supabase.</div>
+      </div>
+      <div>
+        <a href="index.html" class="back-link">← Back to Bench App</a>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:12px;">
+      <h2 style="margin:0 0 8px 0; font-size:18px;">Filters</h2>
+      <div class="row">
+        <div>
+          <label>From Date</label>
+          <input id="histFrom" type="date" />
+        </div>
+        <div>
+          <label>To Date</label>
+          <input id="histTo" type="date" />
+        </div>
+        <div>
+          <label>Tech Initials</label>
+          <input id="histTech" type="text" placeholder="e.g., B.S." />
+        </div>
+        <div>
+          <label>Part / Model #</label>
+          <input id="histPart" type="text" placeholder="e.g., Axiom-PT-200" />
+        </div>
+      </div>
+      <div class="row" style="align-items:flex-end; margin-bottom:0;">
+        <div style="max-width:200px;">
+          <label>Overall Status</label>
+          <select id="histStatus">
+            <option value="">Any</option>
+            <option value="PASS">PASS</option>
+            <option value="FAIL">FAIL</option>
+          </select>
+        </div>
+        <div style="flex:1; display:flex; gap:8px; justify-content:flex-end;">
+          <button class="btn" id="btnClearFilters">Clear Filters</button>
+          <button class="btn primary" id="btnHistRefresh">Refresh</button>
+        </div>
+      </div>
+      <div id="statusMsg">History not loaded yet.</div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin:0 0 8px 0; font-size:18px;">Saved Tests</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Tech</th>
+            <th>Part / Model</th>
+            <th>Primary V</th>
+            <th>V/Turn</th>
+            <th>Status</th>
+            <th>Details</th>
+          </tr>
+        </thead>
+        <tbody id="historyTbody"></tbody>
+      </table>
+      <div id="detailsPanel"></div>
+    </div>
+  </div>
+
+  <!-- Supabase client -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    // ---- CONFIG: same project + anon key as your main app ----
+    const SUPABASE_URL = "https://fymfhurfgdzmiffgnfed.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ5bWZodXJmZ2R6bWlmZmduZmVkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjQ2ODg0ODIsImV4cCI6MjA4MDI2NDQ4Mn0.Lrhp4uHaiEgBW4bOBahK5LEiK-JCOcCzNGKKGsdGJC4";
+
+    const { createClient } = supabase;
+    const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    const $ = s => document.querySelector(s);
+
+    function status(msg) {
+      const el = $('#statusMsg');
+      if (el) el.textContent = msg;
+    }
+
+    function applyFilters(rows) {
+      const from = $('#histFrom').value;
+      const to = $('#histTo').value;
+      const tech = $('#histTech').value.trim().toLowerCase();
+      const part = $('#histPart').value.trim().toLowerCase();
+      const statusVal = $('#histStatus').value;
+
+      return rows.filter(test => {
+        let ok = true;
+
+        let createdDate = null;
+        if (test.created_at) {
+          const d = new Date(test.created_at);
+          if (!isNaN(d)) createdDate = d;
+        }
+
+        if (from && createdDate) {
+          const fromDate = new Date(from + 'T00:00:00');
+          if (createdDate < fromDate) ok = false;
+        }
+
+        if (ok && to && createdDate) {
+          const toDate = new Date(to + 'T23:59:59');
+          if (createdDate > toDate) ok = false;
+        }
+
+        if (ok && tech) {
+          const val = (test.operator || '').toLowerCase();
+          if (!val.includes(tech)) ok = false;
+        }
+
+        if (ok && part) {
+          const val = (test.product_id || '').toLowerCase();
+          if (!val.includes(part)) ok = false;
+        }
+
+        if (ok && statusVal) {
+          if ((test.pass_fail || '') !== statusVal) ok = false;
+        }
+
+        return ok;
+      });
+    }
+
+    async function loadHistory() {
+      const tbody = $('#historyTbody');
+      const detailsPanel = $('#detailsPanel');
+      tbody.innerHTML = '';
+      detailsPanel.innerHTML = '';
+      status('Loading history from Supabase…');
+
+      try {
+        const { data, error } = await supabaseClient
+          .from('qa_tests')
+          .select('*')
+          .order('id', { ascending: false })
+          .limit(300);
+
+        if (error) {
+          console.error('History load error:', error);
+          status('Error loading history: ' + error.message);
+          tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--muted);">Error loading history.</td></tr>';
+          return;
+        }
+
+        const allRows = data || [];
+        if (!allRows.length) {
+          status('History loaded: 0 tests in qa_tests.');
+          tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--muted);">No tests found in the database.</td></tr>';
+          return;
+        }
+
+        const filtered = applyFilters(allRows);
+        status(`History loaded: ${allRows.length} total test(s). Showing ${filtered.length}.`);
+
+        if (!filtered.length) {
+          tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--muted);">No tests match these filters.</td></tr>';
+          return;
+        }
+
+        filtered.forEach(test => {
+          const tr = document.createElement('tr');
+
+          let dateStr = '';
+          if (test.created_at) {
+            const d = new Date(test.created_at);
+            if (!isNaN(d)) dateStr = d.toLocaleDateString();
+          }
+
+          const vpt = (test.vs_per_turn != null && !Number.isNaN(test.vs_per_turn))
+            ? Number(test.vs_per_turn).toFixed(6)
+            : '';
+
+          const statusText = test.pass_fail || '';
+          let statusClass = '';
+          if (statusText === 'PASS') statusClass = 'status-pill status-pass';
+          else if (statusText === 'FAIL') statusClass = 'status-pill status-fail';
+
+          tr.innerHTML = `
+            <td>${dateStr}</td>
+            <td>${test.operator || ''}</td>
+            <td>${test.product_id || ''}</td>
+            <td>${test.primary_voltage != null ? test.primary_voltage : ''}</td>
+            <td>${vpt}</td>
+            <td>${statusText ? `<span class="${statusClass}">${statusText}</span>` : ''}</td>
+            <td><button class="btn" data-testid="${test.id}">View</button></td>
+          `;
+
+          tbody.appendChild(tr);
+        });
+
+        tbody.querySelectorAll('button[data-testid]').forEach(btn => {
+          btn.addEventListener('click', () => {
+            const id = parseInt(btn.getAttribute('data-testid'), 10);
+            if (Number.isFinite(id)) {
+              loadDetails(id);
+            }
+          });
+        });
+
+      } catch (err) {
+        console.error('Unexpected history error:', err);
+        status('Unexpected error loading history (see console).');
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:var(--muted);">Unexpected error.</td></tr>';
+      }
+    }
+
+    async function loadDetails(testId) {
+      const detailsPanel = $('#detailsPanel');
+      detailsPanel.innerHTML = 'Loading details…';
+
+      try {
+        const { data, error } = await supabaseClient
+          .from('qa_secondary_readings')
+          .select('*')
+          .eq('test_id', testId)
+          .order('id', { ascending: true });
+
+        if (error) {
+          console.error('Details load error:', error);
+          detailsPanel.innerHTML = 'Error loading details: ' + error.message;
+          return;
+        }
+
+        if (!data || !data.length) {
+          detailsPanel.innerHTML = '<em>No secondary readings found for this test.</em>';
+          return;
+        }
+
+        let html = `
+          <div style="margin-top:8px;">
+            <strong>Secondaries for Test #${testId}:</strong>
+            <table style="width:100%; border-collapse:collapse; margin-top:6px;">
+              <thead>
+                <tr>
+                  <th style="border-bottom:1px solid var(--border); padding:4px;">Description</th>
+                  <th style="border-bottom:1px solid var(--border); padding:4px;">Expected V</th>
+                  <th style="border-bottom:1px solid var(--border); padding:4px;">Measured V</th>
+                  <th style="border-bottom:1px solid var(--border); padding:4px;">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+        `;
+
+        data.forEach(sec => {
+          html += `
+            <tr>
+              <td style="border-bottom:1px solid var(--border); padding:4px;">${sec.tap_name || ''}</td>
+              <td style="border-bottom:1px solid var(--border); padding:4px;">${sec.expected_voltage != null ? sec.expected_voltage : ''}</td>
+              <td style="border-bottom:1px solid var(--border); padding:4px;">${sec.measured_voltage != null ? sec.measured_voltage : ''}</td>
+              <td style="border-bottom:1px solid var(--border); padding:4px;">${sec.pass_fail || ''}</td>
+            </tr>
+          `;
+        });
+
+        html += `
+              </tbody>
+            </table>
+          </div>
+        `;
+
+        detailsPanel.innerHTML = html;
+      } catch (err) {
+        console.error('Unexpected details error:', err);
+        detailsPanel.innerHTML = 'Unexpected error loading details (see console).';
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      // Default From/To to today
+      const today = new Date().toISOString().slice(0,10);
+      $('#histFrom').value = today;
+      $('#histTo').value = today;
+
+      $('#btnHistRefresh').addEventListener('click', loadHistory);
+      $('#btnClearFilters').addEventListener('click', () => {
+        $('#histFrom').value = '';
+        $('#histTo').value = '';
+        $('#histTech').value = '';
+        $('#histPart').value = '';
+        $('#histStatus').value = '';
+        loadHistory();
+      });
+
+      // Initial load
+      loadHistory();
+    });
+  </script>
+</body>
+</html>
